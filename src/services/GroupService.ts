@@ -2,7 +2,7 @@ import { DocumentClient } from "aws-sdk/clients/dynamodb";
 import Group from "../models/Group";
 
 export default class GroupService {
-    private Tablename: string = 'Groups';
+    private Tablename: string = process.env.GROUPS_TABLE;
 
     constructor(private docClient: DocumentClient) {}
 
