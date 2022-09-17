@@ -24,9 +24,9 @@ export default class ImageService {
         const result = await this.docClient.query({
             TableName : this.tableName,
             IndexName : this.indexName,
-            KeyConditionExpression: 'imageId = :imageId',
+            KeyConditionExpression: 'id = :id',
             ExpressionAttributeValues: {
-                ':imageId': imageId
+                ':id': imageId
             }
         }).promise()
 
