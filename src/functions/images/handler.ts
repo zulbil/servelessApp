@@ -26,3 +26,25 @@ export const getImagesByGroup = middyfy(async (event: APIGatewayProxyEvent): Pro
         });
     }
 })
+
+export const getImage = middyfy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    try {
+        const id = event.pathParameters.id;
+        const image = await imageService.getImage(id);
+
+        if(!image) {
+            return formatJSONResponse ({
+                item: null
+            })
+        }
+
+        return formatJSONResponse ({
+            item: image
+        })
+    } catch (error) {
+        return formatJSONResponse({
+            status: 500,
+            message: error
+        });
+    }
+})
