@@ -2,7 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { formatJSONResponse } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import { v4 } from "uuid";
-import groupService from '../../services'
+import { groupService } from '../../services'
 
 export const getGroups = middyfy(async (): Promise<APIGatewayProxyResult> => {
     const groups = await groupService.getGroups();

@@ -6,7 +6,7 @@ export const getImagesByGroup = {
     {
       http: {
         method: 'get',
-        path: 'images',
+        path: 'groups/{id}/images',
         cors: true
       }
     }
