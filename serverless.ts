@@ -1,7 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
 import {getGroups, createGroup, getGroup, updateGroup, deleteGroup } from '@functions/groups';
-import { getImagesByGroup } from '@functions/images';
+import { getImagesByGroup, getImage } from '@functions/images';
 
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
@@ -20,7 +20,8 @@ const serverlessConfiguration: AWS = {
       AWS_NODEJS_CONNECTION_REUSE_ENABLED: '1',
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       GROUPS_TABLE: 'Groups-${self:provider.stage}',
-      IMAGES_TABLE: 'Images-${self:provider.stage}'
+      IMAGES_TABLE: 'Images-${self:provider.stage}',
+      IMAGES_ID_INDEX: 'ImageIdIndex'
     },
     iam: {
       role: {
@@ -49,6 +50,13 @@ const serverlessConfiguration: AWS = {
             "dynamodb:DeleteItem",
           ],
           Resource: 'arn:aws:dynamodb:us-east-1:114465344430:table/${self:provider.environment.IMAGES_TABLE}'
+        },
+        {
+          Effect: "Allow",
+          Action: [
+            "dynamodb:Query"
+          ],
+          Resource: 'arn:aws:dynamodb:${self:provider.region}:114465344430:table/${self:provider.environment.IMAGES_TABLE}/index/${self:provider.environment.IMAGES_ID_INDEX}'
         }
       ]
       },
@@ -61,7 +69,8 @@ const serverlessConfiguration: AWS = {
     getGroup, 
     updateGroup, 
     deleteGroup,
-    getImagesByGroup
+    getImagesByGroup,
+    getImage
   },
   package: { individually: true },
   custom: {
@@ -106,21 +115,44 @@ const serverlessConfiguration: AWS = {
         Properties: {
           TableName: "${self:provider.environment.IMAGES_TABLE}",
           BillingMode: 'PAY_PER_REQUEST',
-          AttributeDefinitions: [{
-            AttributeName: "groupId",
-            AttributeType: "S",
-          }, {
-            AttributeName: "timestamp",
-            AttributeType: "S",
-          }],
-          KeySchema: [{
-            AttributeName: "groupId",
-            KeyType: "HASH"
-          },
-          {
-            AttributeName: "timestamp",
-            KeyType: "RANGE"
-          }]
+          AttributeDefinitions: [
+            {
+              AttributeName: "groupId",
+              AttributeType: "S",
+            }, 
+            {
+              AttributeName: "id",
+              AttributeType: "S",
+            },
+            {
+              AttributeName: "timestamp",
+              AttributeType: "S",
+            }
+          ],
+          KeySchema: [
+            {
+              AttributeName: "groupId",
+              KeyType: "HASH"
+            },
+            {
+              AttributeName: "timestamp",
+              KeyType: "RANGE"
+            }
+          ],
+          GlobalSecondaryIndexes: [
+            {
+              IndexName: "${self:provider.environment.IMAGES_ID_INDEX}",
+              KeySchema: [
+                {
+                  AttributeName: 'id',
+                  KeyType: 'HASH'
+                }
+              ],
+              Projection: {
+                ProjectionType: 'ALL'
+              }
+            }
+          ]
         }
       }
     }
