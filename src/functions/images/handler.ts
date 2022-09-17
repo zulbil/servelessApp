@@ -64,7 +64,7 @@ export const createImage = middyfy(async (event: APIGatewayProxyEvent): Promise<
             groupId: id,
             title: event.body.title,
             url: event.body.url,
-            timestamp: Date.now()
+            timestamp: new Date().toISOString()
         });
 
         return formatJSONResponse ({
