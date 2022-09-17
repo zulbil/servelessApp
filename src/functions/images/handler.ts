@@ -48,3 +48,32 @@ export const getImage = middyfy(async (event: APIGatewayProxyEvent): Promise<API
         });
     }
 })
+
+export const createImage = middyfy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+    try {
+        const id = event.pathParameters.id;
+        const validGroup = !!groupService.getGroup(id);
+
+        if (!validGroup) {
+            return formatJSONResponse({
+                error: `Group ${id} doesn't exist`
+            }, 404); 
+        }
+        const image = await imageService.createImage({
+            id: v4(),
+            groupId: id,
+            title: event.body.title,
+            url: event.body.url,
+            timestamp: Date.now()
+        });
+
+        return formatJSONResponse ({
+            item: image
+        })
+    } catch (error) {
+        return formatJSONResponse({
+            status: 500,
+            message: error
+        });
+    }
+})

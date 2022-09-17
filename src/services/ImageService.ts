@@ -37,4 +37,12 @@ export default class ImageService {
         return result.Items[0]; 
     }
 
+    async createImage(image: Image): Promise<Image> {
+      await this.docClient.put({
+          TableName: this.tableName,
+          Item: image
+      }).promise()
+      return image;
+  }
+
 }

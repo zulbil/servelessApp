@@ -1,10 +1,10 @@
 export default {
   type: "object",
-  title: 'group',
+  title: 'image',
   properties: {
-    name: { type: 'string' },
-    description: { type: 'string' }
+    title: { type: 'string' },
+    url: { type: 'string' }
   },
-  required: ['name', 'description'],
+  required: ['title'],
   additionalProperties: false
 } as const;

@@ -1,7 +1,7 @@
 import type { AWS } from '@serverless/typescript';
 
 import {getGroups, createGroup, getGroup, updateGroup, deleteGroup } from '@functions/groups';
-import { getImagesByGroup, getImage } from '@functions/images';
+import { getImagesByGroup, getImage, createImage } from '@functions/images';
 
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
@@ -70,7 +70,8 @@ const serverlessConfiguration: AWS = {
     updateGroup, 
     deleteGroup,
     getImagesByGroup,
-    getImage
+    getImage,
+    createImage
   },
   package: { individually: true },
   custom: {
