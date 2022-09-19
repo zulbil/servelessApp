@@ -36,7 +36,7 @@ const serverlessConfiguration: AWS = {
             "dynamodb:UpdateItem",
             "dynamodb:DeleteItem",
           ],
-          Resource: "arn:aws:dynamodb:us-east-1:114465344430:table/${self:provider.environment.GROUPS_TABLE}",
+          Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.GROUPS_TABLE}",
         },
         {
           Effect: "Allow",
@@ -49,14 +49,14 @@ const serverlessConfiguration: AWS = {
             "dynamodb:UpdateItem",
             "dynamodb:DeleteItem",
           ],
-          Resource: 'arn:aws:dynamodb:us-east-1:114465344430:table/${self:provider.environment.IMAGES_TABLE}'
+          Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.IMAGES_TABLE}'
         },
         {
           Effect: "Allow",
           Action: [
             "dynamodb:Query"
           ],
-          Resource: 'arn:aws:dynamodb:${self:provider.region}:114465344430:table/${self:provider.environment.IMAGES_TABLE}/index/${self:provider.environment.IMAGES_ID_INDEX}'
+          Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.IMAGES_TABLE}/index/${self:provider.environment.IMAGES_ID_INDEX}'
         }
       ]
       },
