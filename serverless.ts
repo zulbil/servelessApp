@@ -21,7 +21,8 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       GROUPS_TABLE: 'Groups-${self:provider.stage}',
       IMAGES_TABLE: 'Images-${self:provider.stage}',
-      IMAGES_ID_INDEX: 'ImageIdIndex'
+      IMAGES_ID_INDEX: 'ImageIdIndex',
+      IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}'
     },
     iam: {
       role: {
@@ -57,6 +58,11 @@ const serverlessConfiguration: AWS = {
             "dynamodb:Query"
           ],
           Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.IMAGES_TABLE}/index/${self:provider.environment.IMAGES_ID_INDEX}'
+        }, 
+        {
+          Effect: "Allow",
+          Action: 's3:GetObject',
+          Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
         }
       ]
       },
@@ -154,6 +160,22 @@ const serverlessConfiguration: AWS = {
               }
             }
           ]
+        }
+      },
+      AttachmentsBucket: {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: '${self:provider.environment.IMAGES_S3_BUCKET}',
+          CorsConfiguration: {
+            CorsRules: [
+              {
+                AllowedOrigins: ['*'],
+                AllowedHeaders: ['*'],
+                AllowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
+                MaxAge: 3000
+              }
+            ]
+          }
         }
       }
     }
