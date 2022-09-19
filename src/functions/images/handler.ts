@@ -69,7 +69,7 @@ export const createImage = middyfy(async (event: APIGatewayProxyEvent): Promise<
 
         return formatJSONResponse ({
             item: image
-        })
+        }, 201)
     } catch (error) {
         return formatJSONResponse({
             status: 500,
