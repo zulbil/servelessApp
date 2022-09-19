@@ -39,11 +39,7 @@ export const createImage = {
             'application/json': schema,
           }
         },
-        cors: true,
-        documentation: {
-          summary: 'Create a new image',
-          description: 'Create a new image'
-        }
+        cors: true
       }
     }
   ]
