@@ -61,7 +61,7 @@ const serverlessConfiguration: AWS = {
         }, 
         {
           Effect: "Allow",
-          Action: 's3:GetObject',
+          Action: ['s3:GetObject', 's3:PutObject'],
           Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
         }
       ]
@@ -176,6 +176,25 @@ const serverlessConfiguration: AWS = {
               }
             ]
           }
+        }
+      },
+      BucketPolicy: {
+        Type: "AWS::S3::BucketPolicy",
+        Properties: {
+          PolicyDocument: {
+            Id: "MyPolicy",
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Sid: 'PublicReadForGetBucketObjects',
+                Effect: 'Allow',
+                Principal: '*',
+                Action: 's3:GetObject',
+                Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
+              }
+            ]
+          },
+          Bucket: '${self:provider.environment.IMAGES_S3_BUCKET}'
         }
       }
     }
