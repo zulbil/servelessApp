@@ -1,9 +1,14 @@
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as AWS  from 'aws-sdk'
 import Image from "../models/Image";
 
 export default class ImageService {
     private tableName: string = process.env.IMAGES_TABLE;
     private indexName: string = process.env.IMAGES_ID_INDEX;
+    private bucketName: string = process.env.IMAGES_S3_BUCKET
+    private urlExpiration: number = 300;
+
+    private s3: any = new AWS.S3({ signatureVersion: 'v4' });
 
     constructor(private docClient: DocumentClient) {}
 
@@ -38,11 +43,20 @@ export default class ImageService {
     }
 
     async createImage(image: Image): Promise<Image> {
+      image.url = `https://${this.bucketName}.s3.amazonaws.com/${image.id}`;
       await this.docClient.put({
           TableName: this.tableName,
           Item: image
       }).promise()
       return image;
-  }
+    }
+
+    getUploadUrl(imageId: string): string {
+      return this.s3.getSignedUrl('putObject', {
+        Bucket: this.bucketName,
+        Key: imageId,
+        Expires: this.urlExpiration
+      })
+    }
 
 }
