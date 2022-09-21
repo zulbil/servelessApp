@@ -2,6 +2,7 @@ import type { AWS } from '@serverless/typescript';
 
 import {getGroups, createGroup, getGroup, updateGroup, deleteGroup } from '@functions/groups';
 import { getImagesByGroup, getImage, createImage } from '@functions/images';
+import { sendUploadNotifications } from '@functions/s3';
 
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
@@ -22,7 +23,9 @@ const serverlessConfiguration: AWS = {
       GROUPS_TABLE: 'Groups-${self:provider.stage}',
       IMAGES_TABLE: 'Images-${self:provider.stage}',
       IMAGES_ID_INDEX: 'ImageIdIndex',
-      IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}'
+      IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}',
+      CONNECTIONS_TABLE: 'Connections-${self:provider.stage}',
+      APP_NAME: 'servelessapp'
     },
     iam: {
       role: {
@@ -55,6 +58,15 @@ const serverlessConfiguration: AWS = {
         {
           Effect: "Allow",
           Action: [
+            "dynamodb:Scan",
+            "dynamodb:PutItem",
+            "dynamodb:DeleteItem",
+          ],
+          Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}'
+        },
+        {
+          Effect: "Allow",
+          Action: [
             "dynamodb:Query"
           ],
           Resource: 'arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.IMAGES_TABLE}/index/${self:provider.environment.IMAGES_ID_INDEX}'
@@ -77,7 +89,8 @@ const serverlessConfiguration: AWS = {
     deleteGroup,
     getImagesByGroup,
     getImage,
-    createImage
+    createImage,
+    sendUploadNotifications
   },
   package: { individually: true },
   custom: {
@@ -162,10 +175,37 @@ const serverlessConfiguration: AWS = {
           ]
         }
       },
+      WebSocketConectionsDynamoDBtable: {
+        Type: "AWS::DynamoDB::Table",
+        Properties: {
+          TableName: "${self:provider.environment.CONNECTIONS_TABLE}",
+          BillingMode: 'PAY_PER_REQUEST',
+          AttributeDefinitions: [
+            {
+              AttributeName: "id",
+              AttributeType: "S",
+            }
+          ],
+          KeySchema: [
+            {
+              AttributeName: "id",
+              KeyType: "HASH"
+            }
+          ]
+        }
+      },
       AttachmentsBucket: {
         Type: 'AWS::S3::Bucket',
         Properties: {
           BucketName: '${self:provider.environment.IMAGES_S3_BUCKET}',
+          NotificationConfiguration: {
+            LambdaConfigurations: [
+              {
+                Event: 's3:ObjectCreated:*',
+                Function: '${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications'
+              }
+            ]
+          },
           CorsConfiguration: {
             CorsRules: [
               {
@@ -195,6 +235,16 @@ const serverlessConfiguration: AWS = {
             ]
           },
           Bucket: '${self:provider.environment.IMAGES_S3_BUCKET}'
+        }
+      },
+      SendUploadNotificationsPermission: {
+        Type: "AWS::Lambda::Permission",
+        Properties: {
+          FunctionName: '${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications',
+          Principal: 's3.amazonaws.com',
+          Action: 'lambda:InvokeFunction',
+          //SourceAccount: { 'Ref' : 'AWS::AccountId'},
+          SourceArn: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}'
         }
       }
     }
