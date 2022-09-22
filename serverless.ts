@@ -195,14 +195,14 @@ const serverlessConfiguration: AWS = {
         }
       },
       AttachmentsBucket: {
-        Type: 'AWS::S3::Bucket',
+        Type: "AWS::S3::Bucket",
         Properties: {
           BucketName: '${self:provider.environment.IMAGES_S3_BUCKET}',
           NotificationConfiguration: {
             LambdaConfigurations: [
               {
-                Event: 's3:ObjectCreated:*',
-                Function: '${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications'
+                Event: "s3:ObjectCreated:*",
+                Function: "${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications"
               }
             ]
           },
@@ -243,8 +243,8 @@ const serverlessConfiguration: AWS = {
           FunctionName: '${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications',
           Principal: 's3.amazonaws.com',
           Action: 'lambda:InvokeFunction',
-          //SourceAccount: { 'Ref' : 'AWS::AccountId'},
-          SourceArn: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}'
+          SourceAccount: { 'Ref' : 'AWS::AccountId'},
+          SourceArn: "arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}"
         }
       }
     }
