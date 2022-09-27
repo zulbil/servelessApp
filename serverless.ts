@@ -7,7 +7,7 @@ import { sendUploadNotifications } from '@functions/s3';
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
   frameworkVersion: '3',
-  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dynamodb-local'],
+  plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dynamodb-local', 'serverless-aws-documentation'],
   provider: {
     name: 'aws',
     runtime: 'nodejs14.x',
@@ -25,6 +25,7 @@ const serverlessConfiguration: AWS = {
       IMAGES_ID_INDEX: 'ImageIdIndex',
       IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}',
       CONNECTIONS_TABLE: 'Connections-${self:provider.stage}',
+      THUMBNAILS_S3_BUCKET: 'serveless-thumbnail-${self:provider.stage}',
       APP_NAME: 'servelessapp'
     },
     iam: {
@@ -75,6 +76,11 @@ const serverlessConfiguration: AWS = {
           Effect: "Allow",
           Action: ['s3:GetObject', 's3:PutObject'],
           Resource: 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}/*'
+        },
+        {
+          Effect: "Allow",
+          Action: ['s3:PutObject'],
+          Resource: 'arn:aws:s3:::${self:provider.environment.THUMBNAILS_S3_BUCKET}/*'
         }
       ]
       },
@@ -111,6 +117,16 @@ const serverlessConfiguration: AWS = {
         migrate: true,
       },
       stages: "dev"
+    },
+    topicName: 'imagesTopic-${self:provider.stage}',
+    documentation : {
+      api: {
+        info: {
+          version: 'v1.0.0',
+          title: 'Udagram API',
+          description: 'Serverless application for images sharing'
+        }
+      }
     }
   },
   resources: {
@@ -135,6 +151,9 @@ const serverlessConfiguration: AWS = {
         Properties: {
           TableName: "${self:provider.environment.IMAGES_TABLE}",
           BillingMode: 'PAY_PER_REQUEST',
+          StreamSpecification: {
+            StreamViewType: 'NEW_IMAGE'
+          },
           AttributeDefinitions: [
             {
               AttributeName: "groupId",
@@ -196,13 +215,16 @@ const serverlessConfiguration: AWS = {
       },
       AttachmentsBucket: {
         Type: "AWS::S3::Bucket",
+        DependsOn: ['SNSTopicPolicy'],
         Properties: {
           BucketName: '${self:provider.environment.IMAGES_S3_BUCKET}',
           NotificationConfiguration: {
-            LambdaConfigurations: [
+            TopicConfigurations: [
               {
-                Event: "s3:ObjectCreated:*",
-                Function: "${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications"
+                Event: "s3:ObjectCreated:Put",
+                Topic: {
+                  "Ref":"ImagesTopic"
+                }
               }
             ]
           },
@@ -237,14 +259,46 @@ const serverlessConfiguration: AWS = {
           Bucket: '${self:provider.environment.IMAGES_S3_BUCKET}'
         }
       },
-      SendUploadNotificationsPermission: {
-        Type: "AWS::Lambda::Permission",
+      SNSTopicPolicy: {
+        Type: "AWS::SNS::TopicPolicy",
         Properties: {
-          FunctionName: '${self:provider.environment.APP_NAME}-${self:provider.stage}-sendUploadNotifications',
-          Principal: 's3.amazonaws.com',
-          Action: 'lambda:InvokeFunction',
-          SourceAccount: { 'Ref' : 'AWS::AccountId'},
-          SourceArn: "arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}"
+          PolicyDocument: {
+            Id: "MyTopicPolicy",
+            Version: "2012-10-17",
+            Statement: [
+              {
+                Effect: 'Allow',
+                Principal: {
+                  AWS : '*'
+                },
+                Action: 'sns:Publish',
+                Resource: {
+                  "Ref":"ImagesTopic"
+                },
+                Condition: {
+                  ArnLike: {
+                    'AWS:SourceArn' : 'arn:aws:s3:::${self:provider.environment.IMAGES_S3_BUCKET}'
+                  }
+                }
+              }
+            ]
+          },
+          Topics: [
+            { 'Ref' : 'ImagesTopic' }
+          ]
+        }
+      },
+      ThumbnailsBucket: {
+        Type: 'AWS::S3::Bucket',
+        Properties: {
+          BucketName: '${self:provider.environment.THUMBNAILS_S3_BUCKET}'
+        }
+      },
+      ImagesTopic: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          DisplayName: 'Image bucket topic',
+          TopicName: '${self:custom.topicName}'
         }
       }
     }
