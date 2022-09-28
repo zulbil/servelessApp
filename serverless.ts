@@ -25,7 +25,7 @@ const serverlessConfiguration: AWS = {
       IMAGES_ID_INDEX: 'ImageIdIndex',
       IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}',
       CONNECTIONS_TABLE: 'Connections-${self:provider.stage}',
-      THUMBNAILS_S3_BUCKET: 'serveless-thumbnail-${self:provider.stage}',
+      THUMBNAILS_S3_BUCKET: 'serveless-thumbnail-${self:provider.stage}', 
       APP_NAME: 'servelessapp'
     },
     iam: {

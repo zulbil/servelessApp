@@ -3,7 +3,17 @@ import { handlerPath } from '@libs/handler-resolver';
 export const sendUploadNotifications = {
     environment: {
         STAGE: '${self:provider.stage}',
-        //API_ID: { Ref : 'WebsocketsApi' }
+        API_ID: {
+            'Fn::Join' : [
+                '',
+                [
+                    '.execute-api.',
+                    { Ref: 'AWS::Region' },
+                    '.amazonaws.com/',
+                    '${self:provider.stage}'
+                ]
+            ]
+        } 
     },
     handler: `${handlerPath(__dirname)}/handler.sendNotification`,
     events: [
