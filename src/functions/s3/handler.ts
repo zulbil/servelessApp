@@ -1,29 +1,34 @@
-import { SNSHandler, SNSEvent, S3Event } from 'aws-lambda'
+import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult, SNSHandler, SNSEvent, S3Event } from 'aws-lambda'
 import * as AWS  from 'aws-sdk'
+import * as util from 'util'
 import { connectionService } from '../../services'
 
-const docClient = new AWS.DynamoDB.DocumentClient()
-
-const connectionsTable = process.env.CONNECTIONS_TABLE
-const stage = process.env.STAGE
-const apiId = process.env.API_ID
+const stage = process.env.STAGE;
+const apiId = process.env.API_ID;
 
 const connectionParams = {
   apiVersion: "2018-11-29",
   endpoint: `${apiId}.execute-api.us-east-1.amazonaws.com/${stage}`
-}
+} 
 
-const apiGateway = new AWS.ApiGatewayManagementApi(connectionParams)
+const apigatewaymanagementapi = new AWS.ApiGatewayManagementApi(connectionParams);
 
-export const handler: SNSHandler = async (event: SNSEvent) => {
-  console.log('Processing SNS event ', JSON.stringify(event))
-  for (const snsRecord of event.Records) {
-    const s3EventStr = snsRecord.Sns.Message
-    console.log('Processing S3 event', s3EventStr)
-    const s3Event = JSON.parse(s3EventStr)
+export const sendNotification = async (snsEvent: SNSEvent) => {
 
-    await processS3Event(s3Event)
+  try {
+    console.log(connectionParams);
+    for (const snsRecord of snsEvent.Records) {
+      const s3EventStr = snsRecord.Sns.Message
+      console.log('Processing S3 event', s3EventStr)
+      const s3Event = JSON.parse(s3EventStr)
+
+      await processS3Event(s3Event)
+    }
+
+  } catch (error) {
+    console.log("Something went wrong: ",error.message);
   }
+  
 }
 
 async function processS3Event(s3Event: S3Event) {
@@ -48,7 +53,7 @@ async function sendMessageToClient(connectionId, payload) {
   try {
     console.log('Sending message to a connection', connectionId)
 
-    await apiGateway.postToConnection({
+    await apigatewaymanagementapi.postToConnection({
       ConnectionId: connectionId,
       Data: JSON.stringify(payload),
     }).promise()
@@ -58,13 +63,23 @@ async function sendMessageToClient(connectionId, payload) {
     if (e.statusCode === 410) {
       console.log('Stale connection')
 
-      await docClient.delete({
-        TableName: connectionsTable,
-        Key: {
-          id: connectionId
-        }
-      }).promise()
+      await connectionService.deleteConnection(connectionId);
 
     }
   }
 }
+
+const getApigatewaymanagementapi = ({ stage, domain }) => {
+  const callbackUrlForAWS = util.format(util.format('https://%s/%s', domain, stage));
+   let endpoint =
+      process.env.NODE_ENV !== 'production' ?
+      'http://localhost:3001' :
+      callbackUrlForAWS;
+      console.log('Endpoint: ', endpoint);
+      const apiVersion = '2018-11-29';
+      const apigatewaymanagementapi = new AWS.ApiGatewayManagementApi({
+          apiVersion,
+          endpoint,
+      });
+  return apigatewaymanagementapi;
+};

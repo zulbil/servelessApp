@@ -14,7 +14,7 @@ export const connect: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   
     console.log('Storing item: ', item)
   
-    connectionService.createConnection(item);
+    await connectionService.createConnection(item);
   
     return {
       statusCode: 200,
@@ -29,7 +29,7 @@ export const disconnect: APIGatewayProxyHandler = async (event: APIGatewayProxyE
 
     console.log('Removing item with key: ', connectionId)
 
-    connectionService.deleteConnection(connectionId);
+    await connectionService.deleteConnection(connectionId);
   
     return {
       statusCode: 200,
