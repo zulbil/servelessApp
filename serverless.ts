@@ -3,7 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import {getGroups, createGroup, getGroup, updateGroup, deleteGroup } from '@functions/groups';
 import { getImagesByGroup, getImage, createImage } from '@functions/images';
 import { connect, disconnect } from '@functions/websocket';
-import { sendUploadNotifications } from '@functions/s3';
+import { sendUploadNotifications, resizeImage } from '@functions/s3';
 
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
@@ -98,6 +98,7 @@ const serverlessConfiguration: AWS = {
     getImage,
     createImage,
     sendUploadNotifications,
+    resizeImage,
     connect,
     disconnect
   },

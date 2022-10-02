@@ -26,3 +26,27 @@ export const sendUploadNotifications = {
     ]
     
 };
+
+
+export const resizeImage = {
+    handler: `${handlerPath(__dirname)}/handler.resizeImage`,
+    events: [
+        {
+            sns: {
+                arn: {
+                    'Fn::Join': [
+                        ':',
+                        [
+                            'arn:aws:sns',
+                            { Ref: 'AWS::Region' },
+                            { Ref: 'AWS::AccountId' },
+                            '${self:custom.topicName}'
+                        ]
+                    ]
+                },
+                topicName: '${self:custom.topicName}'
+            }
+        }
+    ]
+    
+};
