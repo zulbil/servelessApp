@@ -68,18 +68,3 @@ async function sendMessageToClient(connectionId, payload) {
     }
   }
 }
-
-const getApigatewaymanagementapi = ({ stage, domain }) => {
-  const callbackUrlForAWS = util.format(util.format('https://%s/%s', domain, stage));
-   let endpoint =
-      process.env.NODE_ENV !== 'production' ?
-      'http://localhost:3001' :
-      callbackUrlForAWS;
-      console.log('Endpoint: ', endpoint);
-      const apiVersion = '2018-11-29';
-      const apigatewaymanagementapi = new AWS.ApiGatewayManagementApi({
-          apiVersion,
-          endpoint,
-      });
-  return apigatewaymanagementapi;
-};
