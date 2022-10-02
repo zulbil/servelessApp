@@ -3,7 +3,7 @@ import { handlerPath } from '@libs/handler-resolver';
 export const sendUploadNotifications = {
     environment: {
         STAGE: '${self:provider.stage}',
-        API_ID: 'wss://4mnc77m6wj'
+        API_ID: '4mnc77m6wj'
     },
     handler: `${handlerPath(__dirname)}/handler.sendNotification`,
     events: [
