@@ -14,7 +14,14 @@ export function getUserId(jwtToken: string): string {
 }
 
 
-export function verifyToken(authHeader: string): JwtToken {
+export function verifyToken(authHeader: string, secret: string = null): JwtToken {
+  if (secret) {
+    return verifyTokenHS256(authHeader, secret);
+  }
+  return verifyTokenRS256(authHeader);
+}
+
+function verifyTokenRS256(authHeader: string): JwtToken {
     if (!authHeader)
       throw new Error('No authentication header')
   
@@ -25,4 +32,17 @@ export function verifyToken(authHeader: string): JwtToken {
     const token = split[1]
   
     return verify(token, cert, { algorithms: ['RS256'] }) as JwtToken
+}
+
+function verifyTokenHS256(authHeader: string, secret: string): JwtToken {
+  if (!authHeader)
+    throw new Error('No authentication header')
+
+  if (!authHeader.toLowerCase().startsWith('bearer '))
+    throw new Error('Invalid authentication header')
+
+  const split = authHeader.split(' ')
+  const token = split[1]
+
+  return verify(token, secret) as JwtToken
 }
