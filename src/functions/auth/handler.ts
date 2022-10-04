@@ -47,7 +47,7 @@ export const rs256Auth0Authorizer = async (event: APIGatewayAuthorizerEvent): Pr
 }
 
 
-export const handler = middyfy(async (event: CustomAuthorizerEvent, context): Promise<CustomAuthorizerResult> => {
+export const auth0Authorizer = middyfy(async (event: CustomAuthorizerEvent, context): Promise<CustomAuthorizerResult> => {
     try {
       const decodedToken = verifyToken(
         event.authorizationToken,
