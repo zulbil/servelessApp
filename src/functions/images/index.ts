@@ -39,7 +39,8 @@ export const createImage = {
             'application/json': schema,
           }
         },
-        cors: true
+        cors: true,
+        authorizer: 'rs256Auth0Authorizer'
       }
     }
   ]
