@@ -4,6 +4,7 @@ import {getGroups, createGroup, getGroup, updateGroup, deleteGroup } from '@func
 import { getImagesByGroup, getImage, createImage } from '@functions/images';
 import { connect, disconnect } from '@functions/websocket';
 import { sendUploadNotifications, resizeImage } from '@functions/s3';
+import { rs256Auth0Authorizer, auth0Authorizer } from '@functions/auth';
 
 const serverlessConfiguration: AWS = {
   service: 'servelessapp',
@@ -27,7 +28,9 @@ const serverlessConfiguration: AWS = {
       IMAGES_S3_BUCKET: 'serveless-bucket-${self:provider.stage}',
       CONNECTIONS_TABLE: 'Connections-${self:provider.stage}',
       THUMBNAILS_S3_BUCKET: 'serveless-thumbnail-${self:provider.stage}', 
-      APP_NAME: 'servelessapp'
+      APP_NAME: 'servelessapp',
+      AUTH_0_SECRET_ID: 'Auth0Secret-${self:provider.stage}',
+      AUTH_0_SECRET_FIELD: 'auth0Secret'
     },
     iam: {
       role: {
@@ -100,7 +103,9 @@ const serverlessConfiguration: AWS = {
     sendUploadNotifications,
     resizeImage,
     connect,
-    disconnect
+    disconnect,
+    rs256Auth0Authorizer,
+    auth0Authorizer
   },
   package: { individually: true },
   custom: {
@@ -135,6 +140,65 @@ const serverlessConfiguration: AWS = {
   },
   resources: {
     Resources: {
+      GatewayresponseDefault4XX: {
+        Type: 'AWS::ApiGateway::GatewayResponse',
+        Properties: {
+          ResponseParameters: {
+            'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+            'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+            'gatewayresponse.header.Access-Control-Allow-Methods': "'GET,OPTIONS,POST'"
+          },
+          ResponseType: 'DEFAULT_4XX',
+          RestApiId: { Ref: 'ApiGatewayRestApi' }
+        }
+      },
+      KMSKey: {
+        Type: 'AWS::KMS::Key',
+        Properties: {
+          Description: 'KMS key to encrypt Auth0 secret',
+          KeyPolicy: {
+            Version: '2012-10-17',
+            Id: 'key-default-1',
+            Statement: [
+              {
+                Sid: 'Allow admnistration of the key',
+                Effect: 'Allow',
+                Principal: {
+                  AWS: {
+                    'Fn::Join': [
+                      ':',
+                      [
+                        'arn:aws:iam:', 
+                        { Ref: 'AWS::AccountId' },
+                        'root'
+                      ]
+                    ]
+                  }
+                },
+                Action: [
+                  'kms:*'
+                ],
+                Resource: '*'
+              }
+            ]
+          }
+        }
+      },
+      KMSKeyAlias: {
+        Type: 'AWS::KMS::Alias',
+        Properties: {
+          AliasName: 'alias/auth0Key-${self:provider.stage}',
+          TargetKeyId: { Ref : 'KMSKey' }
+        }
+      },
+      Auth0Secret: {
+        Type: 'AWS::SecretsManager::Secret',
+        Properties: {
+          Name: '${self:provider.environment.AUTH_0_SECRET_ID}',
+          Description: 'Auth0 secret',
+          KmsKeyId: { Ref: 'KMSKey' }
+        }
+      },
       GroupsDynamoDBtable: {
         Type: "AWS::DynamoDB::Table",
         Properties: {
