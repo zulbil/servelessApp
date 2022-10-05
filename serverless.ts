@@ -85,6 +85,16 @@ const serverlessConfiguration: AWS = {
           Effect: "Allow",
           Action: ['s3:PutObject'],
           Resource: 'arn:aws:s3:::${self:provider.environment.THUMBNAILS_S3_BUCKET}/*'
+        }, 
+        {
+          Effect: 'Allow',
+          Action: ['secretsmanager:GetSecretValue'],
+          Resource: { Ref: 'Auth0Secret'}
+        },
+        {
+          Effect: 'Allow',
+          Action: [ 'kms:Decrypt' ],
+          Resource: 'arn:aws:kms:${self:provider.region}:*:alias/auth0Key-${self:provider.stage}'
         }
       ]
       },
