@@ -94,7 +94,9 @@ const serverlessConfiguration: AWS = {
         {
           Effect: 'Allow',
           Action: [ 'kms:Decrypt' ],
-          Resource: 'arn:aws:kms:${self:provider.region}:*:alias/auth0Key-${self:provider.stage}'
+          Resource: {
+            "Fn::GetAtt" : ["KMSKey", "Arn"]
+          }
         }
       ]
       },
