@@ -1,16 +1,17 @@
 import { CustomAuthorizerEvent, CustomAuthorizerResult } from "aws-lambda";
-import middy from '@middy/core'
-import secretsManager from '@middy/secrets-manager';
-import { verifyToken } from './../../services/JwtTokenService';
+// import middy from '@middy/core'
+import { middyfy } from '@libs/lambda';
+// import secretsManager from '@middy/secrets-manager';
+import { jwtTokenService } from './../../services';
 
 
-const secretId = process.env.AUTH_0_SECRET_ID
+// const secretId = process.env.AUTH_0_SECRET_ID
 const secretField = process.env.AUTH_0_SECRET_FIELD
 
 
-export const rs256Auth0Authorizer = async (event: CustomAuthorizerEvent): Promise<CustomAuthorizerResult> =>  {
+export const rs256Auth0Authorizer = middyfy(async (event: CustomAuthorizerEvent): Promise<CustomAuthorizerResult> =>  {
     try {
-        const jwtToken = verifyToken(event.authorizationToken)
+        const jwtToken = jwtTokenService.verifyToken(event.authorizationToken)
         console.log('User was authorized', jwtToken)
     
         return {
@@ -43,12 +44,12 @@ export const rs256Auth0Authorizer = async (event: CustomAuthorizerEvent): Promis
           }
         }
     }
-}
+})
 
 
-export const auth0Authorizer = middy(async (event: CustomAuthorizerEvent, context): Promise<CustomAuthorizerResult> => {
+export const auth0Authorizer = middyfy(async (event: CustomAuthorizerEvent, context): Promise<CustomAuthorizerResult> => {
     try {
-      const decodedToken = verifyToken(
+      const decodedToken = jwtTokenService.verifyToken(
         event.authorizationToken,
         context.AUTH0_SECRET[secretField]
       )
@@ -86,15 +87,15 @@ export const auth0Authorizer = middy(async (event: CustomAuthorizerEvent, contex
     }
 })
 
-auth0Authorizer.use(
-  secretsManager({
-    cache: true,
-    cacheExpiryInMillis: 60000,
-    // Throw an error if can't read the secret
-    throwOnFailedCall: true,
-    secrets: {
-      AUTH0_SECRET: secretId
-    }
-  })
-)
+// auth0Authorizer.use(
+//   secretsManager({
+//     cache: true,
+//     cacheExpiryInMillis: 60000,
+//     // Throw an error if can't read the secret
+//     throwOnFailedCall: true,
+//     secrets: {
+//       AUTH0_SECRET: secretId
+//     }
+//   })
+// )
   
