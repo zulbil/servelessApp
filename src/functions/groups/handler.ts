@@ -3,13 +3,22 @@ import { formatJSONResponse } from '@libs/api-gateway';
 import { middyfy } from '@libs/lambda';
 import { v4 } from "uuid";
 import { groupService } from '../../services'
+import express from 'express'
+import * as awsServerlessExpress from 'aws-serverless-express'
 
-export const getGroups = middyfy(async (): Promise<APIGatewayProxyResult> => {
+const app = express();
+
+app.get('/groups', async (_req, res) => {
     const groups = await groupService.getGroups();
-    return formatJSONResponse ({
-        groups
+  
+    res.json({
+      groups
     })
 })
+
+const server = awsServerlessExpress.createServer(app)
+
+export const getGroups = (event: APIGatewayProxyEvent, context: any) => { awsServerlessExpress.proxy(server, event, context) }
 
 
 export const createGroup = middyfy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
