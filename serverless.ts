@@ -9,9 +9,6 @@ const serverlessConfiguration: AWS = {
   service: 'servelessapp',
   frameworkVersion: '3',
   plugins: ['serverless-esbuild', 'serverless-offline', 'serverless-dynamodb-local', 'serverless-aws-documentation'],
-  package: {
-    individually: true
-  },
   provider: {
     name: 'aws',
     runtime: 'nodejs14.x',
